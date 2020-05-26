@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css')}}" />
+        <title>{% block title %}{% endblock %}</title>
+    </head>
+    <body>
+        <header>
+            <div class="navbar">
+                <a href="{{ url_for('home') }}" class="navbar-brand">
+                        <img src="{{ url_for('static', filename='img/torna.png') }}" alt="Torna alla home" title="Torna alla home" />
+                </a>
+            </div>
+            <div>
+                <h1>{% block bodytitle %}{% endblock %}</h1>
+            </div>
+            <div class="logo">
+                <img src="{{ url_for('static', filename='img/logoErdis.gif') }}" 
+                     alt="erdis.it - Intranet - Logo" 
+                     title="erdis.it - Intranet - Logo" />
+            </div>
+        </header>
+
+        <div class="body-content">
+            {% block content %}
+            {% endblock %}
+            <hr/>
+        </div>
+        <footer>
+            <p>© ERDIS Marche - Servizi Informatici - 2020</p>
+        </footer>
+    </body>
+</html>

@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}
+Verifica un file
+{% endblock %}
+{% block bodytitle %}
+Verifica un file (Sono ammessi solo file .txt)
+{% endblock %}
+{% block content %}
+<form method=post enctype=multipart/form-data>
+    <input type=file name=file required>
+    <input type=submit value=Verifica>
+    </form>
+{% endblock %}

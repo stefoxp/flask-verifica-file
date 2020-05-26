@@ -1,6 +1,6 @@
 import os, re
 
-from flask import Flask, flash, redirect, request, send_from_directory, url_for
+from flask import Flask, flash, redirect, request, send_from_directory, url_for, render_template
 from werkzeug.utils import secure_filename
 
 UPLOAD_FOLDER = 'uploads'
@@ -12,26 +12,26 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     file_list = []
+    filename_out = "ELAB_" + filename + "z"
 
     # apre il file
     with open(os.path.join(app.config['UPLOAD_FOLDER'], filename), encoding="windows-1252") as file_input:
         for line in file_input:
             file_list.append(line)
 
-    # aggiunge una riga
-    file_list.append("ELABORATO")
-
     # salva in un nuovo file
-    with open(os.path.join(app.config['UPLOAD_FOLDER'], "ELAB_" + filename), encoding="utf8", mode="w") as file_output:
+    with open(os.path.join(app.config['UPLOAD_FOLDER'], filename_out), encoding="utf8", mode="w") as file_output:
         for row in file_list:
             row_verified = row_verify(row)
+            # rimuove il segno di fine riga
+            row_verified = row_verified[:-1]
             print(row_verified, file=file_output)
 
-        file_output.write("file elaborato correttamente")
+        # file_output.write("file elaborato correttamente")
 
     # visualizza il file elaborato
-    return send_from_directory(app.config['UPLOAD_FOLDER'],
-                               "ELAB_" + filename)
+    return send_from_directory(directory=app.config['UPLOAD_FOLDER'],
+                               filename=filename_out)
 
 def row_verify(row):
     row_verified = row
@@ -70,7 +70,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/', methods=['GET', 'POST'])
-def upload_file():
+def home():
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -87,13 +87,4 @@ def upload_file():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             return redirect(url_for('uploaded_file',
                                     filename=filename))
-    return '''
-    <!doctype html>
-    <title>Verifica un file</title>
-    <h1>Verifica un file</h1>
-    <h2>Sono ammessi solo file .txt</h2>
-    <form method=post enctype=multipart/form-data>
-      <input type=file name=file>
-      <input type=submit value=Verifica>
-    </form>
-    '''
+    return render_template("home.html")
