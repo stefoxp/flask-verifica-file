@@ -1,5 +1,6 @@
-import os
-from flask import Flask, flash, request, redirect, url_for, send_from_directory
+import os, re
+
+from flask import Flask, flash, redirect, request, send_from_directory, url_for
 from werkzeug.utils import secure_filename
 
 UPLOAD_FOLDER = 'uploads'
@@ -23,13 +24,47 @@ def uploaded_file(filename):
     # salva in un nuovo file
     with open(os.path.join(app.config['UPLOAD_FOLDER'], "ELAB_" + filename), encoding="utf8", mode="w") as file_output:
         for row in file_list:
-            print(row, file=file_output)
+            row_verified = row_verify(row)
+            print(row_verified, file=file_output)
 
         file_output.write("file elaborato correttamente")
 
     # visualizza il file elaborato
     return send_from_directory(app.config['UPLOAD_FOLDER'],
                                "ELAB_" + filename)
+
+def row_verify(row):
+    row_verified = row
+    tup_to_change = (
+                        ("[åàáâãäæ]", "a"),
+                        ("[ÁÀÄÃÅÂ]", "A"),
+                        ("[èéêë]", "e"),
+                        ("[ÈÉËÊ]", "E"),
+                        ("[ìíîï]", "i"),
+                        ("[ÍÌÏÎ]", "I"),
+                        ("[òóôõö]", "o"),
+                        ("[ÓÒÖÔÕ]", "O"),
+                        ("[ùúûü]", "u"),
+                        ("[ÚÙÛÜ]", "U"),
+                        ("[¥]", "N"),
+                        ("[ý]", "y"),
+                        ("[Š]", "S"),
+                        ("[š]", "s"),
+                        ("[ç]", "c"),
+                        ("[ñ]", "n"),
+                        ("[Ñ]", "N"),
+                        ("[ž]", "z"),
+                        ("[[]", "("),
+                        ("[]]", ")"),
+                        ("[@]", " "),
+                        ("[#]", " "),
+                        ("[ø]", " "),
+                        # (@"[^\u0000-\u007F]", " "),
+                )
+    for value in tup_to_change:
+        row_verified = re.sub(value[0], value[1], row_verified)
+    
+    return row_verified
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -56,6 +91,7 @@ def upload_file():
     <!doctype html>
     <title>Verifica un file</title>
     <h1>Verifica un file</h1>
+    <h2>Sono ammessi solo file .txt</h2>
     <form method=post enctype=multipart/form-data>
       <input type=file name=file>
       <input type=submit value=Verifica>
