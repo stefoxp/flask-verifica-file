@@ -1,40 +1,26 @@
 import os, re
 
-from flask import Flask, flash, redirect, request, send_from_directory, url_for, render_template
+from flask import Flask, flash, redirect, request, url_for, render_template, make_response
 from werkzeug.utils import secure_filename
 
-UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'txt'}
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    file_list = []
-    filename_out = "ELAB_" + filename + "z"
+def transform_file(file_in):
+    '''
+        grazie a https://stackoverflow.com/questions/27628053/uploading-and-downloading-files-with-flask
+    '''
+    # legge il file
+    file_input = file_in.stream.read().decode("windows-1252")
 
-    # apre il file
-    with open(os.path.join(app.config['UPLOAD_FOLDER'], filename), encoding="windows-1252") as file_input:
-        for line in file_input:
-            file_list.append(line)
-
-    # salva in un nuovo file
-    with open(os.path.join(app.config['UPLOAD_FOLDER'], filename_out), encoding="utf8", mode="w") as file_output:
-        for row in file_list:
-            row_verified = row_verify(row)
-            # rimuove il segno di fine riga
-            row_verified = row_verified[:-1]
-            print(row_verified, file=file_output)
-
-        # file_output.write("file elaborato correttamente")
+    file_verified = char_replace(file_input)
 
     # visualizza il file elaborato
-    return send_from_directory(directory=app.config['UPLOAD_FOLDER'],
-                               filename=filename_out)
+    return file_verified
 
-def row_verify(row):
-    row_verified = row
+def char_replace(file_content):
+    file_content_verified = file_content
     tup_to_change = (
                         ("[åàáâãäæ]", "a"),
                         ("[ÁÀÄÃÅÂ]", "A"),
@@ -62,9 +48,11 @@ def row_verify(row):
                         # (@"[^\u0000-\u007F]", " "),
                 )
     for value in tup_to_change:
-        row_verified = re.sub(value[0], value[1], row_verified)
+        file_content_verified = re.sub(value[0], value[1], file_content_verified)
+
+    file_content_verified = file_content_verified.replace("\n\n", "\n")
     
-    return row_verified
+    return file_content_verified
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -84,7 +72,10 @@ def home():
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return redirect(url_for('uploaded_file',
-                                    filename=filename))
+            # verifica, modifica e restituisce il file
+            result = transform_file(file)
+            response = make_response(result)
+            response.headers["Content-Disposition"] = "attachment; filename=VERIFICATO_" + file.filename + ""
+            return response
+
     return render_template("home.html")
