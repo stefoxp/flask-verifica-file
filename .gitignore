@@ -6,6 +6,7 @@
 # custom
 env/
 uploads/
+data/
 
 # User-specific files
 *.rsuser
